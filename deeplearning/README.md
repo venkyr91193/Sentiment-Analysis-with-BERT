@@ -6,9 +6,9 @@ it plots an histogram to view the results for best selection of the "max_seq_len
 of the Train class component.
 
 """
-    >>> from deeplearning.data_analyser import DataAnalyser
 
+    >>> from deeplearning.data_analyser import DataAnalyser
     >>> obj = DataAnalyser()
-    
     >>> obj.analyse()
+    
 """
