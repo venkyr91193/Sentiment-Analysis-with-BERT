@@ -17,7 +17,7 @@ from oops.preprocess import Preprocess
 
 
 class Train:
-  def __init__(self, max_seq_len:int = 40, bs:int = 32, labels:List[str] = None):
+  def __init__(self, max_seq_len:int = 50, bs:int = 32, labels:List[str] = None):
     # SET YOUR SENTENCE LENGTH AND BATCH SIZE
     self.MAX_LEN = max_seq_len
     self.BATCH_SIZE = bs
@@ -142,7 +142,7 @@ class Train:
 
     # SPLIT INTO TRAIN AND TEST
     tr_inputs, val_inputs, tr_tags, val_tags = train_test_split(input_ids, tags,
-                                                random_state=42, test_size=0.1)
+                                                random_state=42, test_size=0.2)
 
     # CONVERT TO TORCH TENSORS
     tr_inputs = torch.tensor(tr_inputs)
