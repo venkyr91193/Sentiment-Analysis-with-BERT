@@ -7,7 +7,7 @@ of the Train class component.
 
 To use this API, follow the steps as below:
 
->>> from deeplearning.data_analyser import DataAnalyser
->>> obj = DataAnalyser()
->>> obj.analyse()
+    >>> from deeplearning.data_analyser import DataAnalyser
+    >>> obj = DataAnalyser()
+    >>> obj.analyse()
 
