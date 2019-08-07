@@ -36,4 +36,5 @@ class DataAnalyser:
     plt.hist(length_sents,bins=50)
     plt.xlabel('Number of words per Input data.')
     plt.ylabel('Frequency.')
+    plt.savefig(os.path.join(os.path.dirname(os.path.dirname(__file__)),'plots','analysed.png'))
     plt.show()

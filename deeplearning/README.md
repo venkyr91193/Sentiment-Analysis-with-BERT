@@ -25,8 +25,9 @@ This component is used to train your model based on your requirements
 
 I have fixed the max sequence length to 50 taking into account start and end tokens after 
 observing the result from the DataAnalyzer class which gave me results giving information 
-of 40 words per sentence. Its adviced to set the batch size to 64 according to the BERT papers. 
-But you can decrease it if your GPU memory is low. I have defaulted the batch size to 32.
+of 40 words per sentence (shown in figure analysed.png in \plots folder). Its adviced to 
+set the batch size to 64 according to the BERT papers. But you can decrease it if your GPU 
+memory is low. I have defaulted the batch size to 32.
 
 # Results
 
