@@ -1,10 +1,12 @@
 import os
+from typing import List
 
 import numpy as np
 import pandas as pd
 import torch
 from pytorch_transformers import (BertConfig, BertForSequenceClassification,
                                   BertTokenizer)
+from seqeval.metrics import classification_report, f1_score
 from sklearn.model_selection import train_test_split
 from torch.optim import Adam
 from torch.utils.data import (DataLoader, RandomSampler, SequentialSampler,
@@ -12,7 +14,6 @@ from torch.utils.data import (DataLoader, RandomSampler, SequentialSampler,
 from tqdm import tqdm, trange
 
 from oops.preprocess import Preprocess
-from seqeval.metrics import classification_report, f1_score
 
 
 class Train:
@@ -56,14 +57,14 @@ class Train:
     self.optimizer = Adam(optimizer_grouped_parameters, lr=3e-5)
     # load and preprocess
     self.load_data()
-    self.preprocess(self.data)
+    self.preprocess_data()
     # make the raw data into input tensors for train
     self.train_dataloader,self.valid_dataloader = self.make_train_test_tensor()
 
     # initialize cuda with torch
     self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     self.n_gpu = torch.cuda.device_count()
-    print(torch.cuda.get_device_name(0))
+    print(self.n_gpu)
 
   def load_data(self):
     """
@@ -80,7 +81,7 @@ class Train:
     labels_flat = labels.flatten()
     return np.sum(pred_flat == labels_flat) / len(labels_flat)
 
-  def preprocess(self):
+  def preprocess_data(self):
     """
     Function to get the required data
     """
@@ -91,7 +92,7 @@ class Train:
     'relief','surprise','love','hate','neutral','worry','happiness','sadness']
     for item in self.labels:
       if item in label_list:
-        self.labels.remove(item)
+        label_list.remove(item)
     self.data = self.preprocess._Preprocess__remove_rows(self.data,label_list)
     # reset the index
     self.data.index = range(len(self.data))
@@ -110,7 +111,7 @@ class Train:
     
     tokens = ["[CLS]"] + tokens_temp + ["[SEP]"]
     segment_ids = [0] * len(tokens)
-    input_ids = tokenizer.convert_tokens_to_ids(tokens)
+    input_ids = self.tokenizer.convert_tokens_to_ids(tokens)
     input_mask = [1] * len(input_ids)
 
     # Zero-pad up to the sequence length.
@@ -175,7 +176,8 @@ class Train:
             b_labels = b_labels.long()
             '''
             # forward pass
-            loss = self.model(b_input_ids, labels=b_labels)
+            output = self.model(b_input_ids, labels=b_labels)
+            loss = output[0]
             # backward pass
             loss.backward()
             # track train loss
