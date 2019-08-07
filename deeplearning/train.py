@@ -146,20 +146,25 @@ class Train:
       tags.append([self.label_map[self.data.sentiment[idx]]])
 
     # SPLIT INTO TRAIN AND TEST
-    tr_inputs, val_inputs, tr_tags, val_tags = train_test_split(input_ids, input_mask, 
-    segment_ids, tags, random_state=42, test_size=0.2)
+    tr_inputs, val_inputs, tr_masks, val_masks, tr_seg, val_seg,\
+      tr_tags, val_tags = train_test_split(input_ids, input_mask, \
+        segment_ids, tags, random_state=42, test_size=0.2)
 
     # CONVERT TO TORCH TENSORS
     tr_inputs = torch.tensor(tr_inputs)
     val_inputs = torch.tensor(val_inputs)
+    tr_masks = torch.tensor(tr_masks)
+    val_masks = torch.tensor(val_masks)
+    tr_seg = torch.tensor(tr_seg)
+    val_seg = torch.tensor(val_seg)
     tr_tags = torch.tensor(tr_tags)
     val_tags = torch.tensor(val_tags)
 
-    train_data = TensorDataset(tr_inputs, tr_tags)
+    train_data = TensorDataset(tr_inputs, tr_masks, tr_seg, tr_tags)
     train_sampler = RandomSampler(train_data)
     train_dataloader = DataLoader(train_data, sampler=train_sampler, batch_size=self.BATCH_SIZE)
 
-    valid_data = TensorDataset(val_inputs, val_tags)
+    valid_data = TensorDataset(val_inputs, val_masks, val_seg, val_tags)
     valid_sampler = SequentialSampler(valid_data)
     valid_dataloader = DataLoader(valid_data, sampler=valid_sampler, batch_size=self.BATCH_SIZE)
 
