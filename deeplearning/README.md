@@ -26,3 +26,14 @@ This component is used to train your model based on your requirements
 I have fixed the max sequence length to 40 after observing the result from the DataAnalyzer class.
 Its adviced to set the batch size to 64 according to the BERT papers. But you can decrease it if
 your GPU memory is low. I have defaulted the batch size to 32.
+
+# Results
+
+With just 2 epochs I was able to achieve 82% accuracy on validation data as shown.
+    Training on GeForce GTX 1060
+    Validation loss: 0.4211259511384097
+    Validation Accuracy: 0.8185876623376623
+    Validation F1-Score: 0.8179190751445086
+
+One epoch toook 2.2 minutes on an average training on GTX 1060.
+

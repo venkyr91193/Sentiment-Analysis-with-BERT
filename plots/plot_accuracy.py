@@ -6,4 +6,5 @@ accuracy = {'MultinomialNB_tfidf': 0.5019267822736031,
           'LogisticRegression_tfidf': 0.5067437379576107, 
           'LogisticRegression_countvec': 0.7822736030828517, 
           'RandomForestClassifier_tfidf': 0.5048169556840078, 
-          'RandomForestClassifier_countvec': 0.7581888246628131}
+          'RandomForestClassifier_countvec': 0.7581888246628131,
+          'BERT': 0.8179190751445086}
