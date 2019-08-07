@@ -128,21 +128,26 @@ class Train:
     assert len(input_mask) == self.MAX_LEN
     assert len(segment_ids) == self.MAX_LEN
 
-    return input_ids
+    return input_ids, input_mask, segment_ids
 
   def make_train_test_tensor(self):
     """
     To make train and test tensors for training
     """
     input_ids = list()
+    input_mask = list()
+    segment_ids = list()
     tags = list()
     for idx in range(len(self.data)):
-      input_ids.append(self.make_sequence(self.data.content[idx]))
+      inp_id, inp_mask, seg_id = self.make_sequence(self.data.content[idx])
+      input_ids.append(inp_id)
+      input_mask.append(inp_mask)
+      segment_ids.append(seg_id)
       tags.append([self.label_map[self.data.sentiment[idx]]])
 
     # SPLIT INTO TRAIN AND TEST
-    tr_inputs, val_inputs, tr_tags, val_tags = train_test_split(input_ids, tags,
-                                                random_state=42, test_size=0.2)
+    tr_inputs, val_inputs, tr_tags, val_tags = train_test_split(input_ids, input_mask, 
+    segment_ids, tags, random_state=42, test_size=0.2)
 
     # CONVERT TO TORCH TENSORS
     tr_inputs = torch.tensor(tr_inputs)
@@ -174,13 +179,13 @@ class Train:
         for step, batch in enumerate(self.train_dataloader):
             # add batch to gpu
             batch = tuple(t.to(self.device) for t in batch)
-            b_input_ids, b_labels = batch
+            b_input_ids, b_input_mask, b_segment_ids, b_labels = batch
             '''
             b_input_ids = b_input_ids.long()
             b_labels = b_labels.long()
             '''
             # forward pass
-            output = self.model(b_input_ids, labels=b_labels)
+            output = self.model(b_input_ids, b_segment_ids, b_input_mask, labels=b_labels)
             loss = output[0]
             # backward pass
             loss.backward()
@@ -208,13 +213,13 @@ class Train:
     nb_eval_steps, nb_eval_examples = 0, 0
     for batch in self.valid_dataloader:
         batch = tuple(t.to(self.device) for t in batch)
-        b_input_ids, b_labels = batch
+        b_input_ids, b_input_mask, b_segment_ids, b_labels = batch
         '''
         b_input_ids = b_input_ids.long()
         b_labels = b_labels.long()
         '''
         with torch.no_grad():
-            output = self.model(b_input_ids, labels = b_labels)
+            output = self.model(b_input_ids, b_segment_ids, b_input_mask, labels = b_labels)
             tmp_eval_loss = output[0]
             logits = output[1]
         logits = logits.detach().cpu().numpy()
