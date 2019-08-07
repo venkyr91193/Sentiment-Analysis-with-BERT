@@ -64,8 +64,11 @@ class Train:
     # initialize cuda with torch
     self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     self.n_gpu = torch.cuda.device_count()
-    print('Training on',torch.cuda.get_device_name())
-    self.model.cuda()
+    if self.n_gpu > 0:
+      print('Training on',torch.cuda.get_device_name())
+      self.model.cuda()
+    else:
+      print('Training on CPU')
 
   def load_data(self):
     """
