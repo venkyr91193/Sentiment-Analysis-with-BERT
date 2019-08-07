@@ -6,17 +6,22 @@ import torch
 from pytorch_transformers import (BertConfig, BertForSequenceClassification,
                                   BertTokenizer)
 from sklearn.model_selection import train_test_split
+from torch.optim import Adam
 from torch.utils.data import (DataLoader, RandomSampler, SequentialSampler,
                               TensorDataset)
+from tqdm import tqdm, trange
 
 from oops.preprocess import Preprocess
+from seqeval.metrics import classification_report, f1_score
 
 
 class Train:
-  def __init__(self, MAX_LEN:int = 150, BATCH_SIZE:int = 16):
+  def __init__(self, MAX_LEN:int = 150, BATCH_SIZE:int = 16, labels:List[str] = None):
     # SET YOUR SENTENCE LENGTH AND BATCH SIZE
     self.MAX_LEN = MAX_LEN
     self.BATCH_SIZE = BATCH_SIZE
+    self.labels = labels
+    self.label_map = {label: i for i, label in enumerate(self.labels)}
     self.data = None
     self.preprocess = Preprocess()
 
@@ -49,6 +54,16 @@ class Train:
       optimizer_grouped_parameters = [{"params": [p for n, p in param_optimizer]}]
 
     self.optimizer = Adam(optimizer_grouped_parameters, lr=3e-5)
+    # load and preprocess
+    self.load_data()
+    self.preprocess(self.data)
+    # make the raw data into input tensors for train
+    self.train_dataloader,self.valid_dataloader = self.make_train_test_tensor()
+
+    # initialize cuda with torch
+    self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    self.n_gpu = torch.cuda.device_count()
+    print(torch.cuda.get_device_name(0))
 
   def load_data(self):
     """
@@ -72,8 +87,12 @@ class Train:
     # I choose to train only for two labels
     # Do not use this preprocess if you want to train
     # for all the other emotions as well
-    self.data = self.preprocess._Preprocess__remove_rows(self.data,['anger','boredom',
-    'enthusiasm','empty','fun','relief','surprise','love','hate','neutral','worry'])
+    label_list = ['anger','boredom','enthusiasm','empty','fun',
+    'relief','surprise','love','hate','neutral','worry','happiness','sadness']
+    for item in self.labels:
+      if item in label_list:
+        self.labels.remove(item)
+    self.data = self.preprocess._Preprocess__remove_rows(self.data,label_list)
     # reset the index
     self.data.index = range(len(self.data))
 
@@ -95,7 +114,7 @@ class Train:
     input_mask = [1] * len(input_ids)
 
     # Zero-pad up to the sequence length.
-    padding = [0] * (max_seq_length - len(input_ids))
+    padding = [0] * (self.MAX_LEN - len(input_ids))
     input_ids += padding
     input_mask += padding
     segment_ids += padding
@@ -114,7 +133,7 @@ class Train:
     tags = list()
     for idx in range(len(self.data)):
       input_ids.append(self.make_sequence(self.data.content[idx]))
-      tags.append([self.data.content[idx]])
+      tags.append([self.label_map[self.data.sentiment[idx]]])
 
     # SPLIT INTO TRAIN AND TEST
     tr_inputs, val_inputs, tr_tags, val_tags = train_test_split(input_ids, tags,
@@ -136,5 +155,76 @@ class Train:
 
     return train_dataloader,valid_dataloader
 
-  def start_train(self):
-    pass
+  def start_train(self, epochs:int = 5):
+    """
+    Function to train the model
+    """
+    max_grad_norm = 1.0
+
+    for _ in trange(epochs, desc="Epoch"):
+        # TRAIN loop
+        self.model.train()
+        tr_loss = 0
+        nb_tr_examples, nb_tr_steps = 0, 0
+        for step, batch in enumerate(self.train_dataloader):
+            # add batch to gpu
+            batch = tuple(t.to(self.device) for t in batch)
+            b_input_ids, b_labels = batch
+            '''
+            b_input_ids = b_input_ids.long()
+            b_labels = b_labels.long()
+            '''
+            # forward pass
+            loss = self.model(b_input_ids, labels=b_labels)
+            # backward pass
+            loss.backward()
+            # track train loss
+            tr_loss += loss.item()
+            nb_tr_examples += b_input_ids.size(0)
+            nb_tr_steps += 1
+            # gradient clipping
+            torch.nn.utils.clip_grad_norm_(parameters=self.model.parameters(), max_norm=max_grad_norm)
+            # update parameters
+            optimizer.step()
+            self.model.zero_grad()
+        # print train loss per epoch
+        print("Train loss: {}".format(tr_loss/nb_tr_steps))
+
+  def start_eval(self):
+    """
+    Function to evaluate the model
+    """
+    # EVALUATING YOUR MODEL
+    self.model.eval()
+    predictions = []
+    true_labels = []
+    eval_loss, eval_accuracy = 0, 0
+    nb_eval_steps, nb_eval_examples = 0, 0
+    for batch in self.valid_dataloader:
+        batch = tuple(t.to(self.device) for t in batch)
+        b_input_ids, b_labels = batch
+        '''
+        b_input_ids = b_input_ids.long()
+        b_labels = b_labels.long()
+        '''
+        with torch.no_grad():
+            output = self.model(b_input_ids, labels = b_labels)
+            tmp_eval_loss = output[0]
+            logits = output[1]
+        logits = logits.detach().cpu().numpy()
+        predictions.extend([list(p) for p in np.argmax(logits, axis=1)])
+        label_ids = b_labels.to('cpu').numpy()
+        true_labels.append(label_ids)
+        tmp_eval_accuracy = flat_accuracy(logits, label_ids)
+
+        eval_loss += tmp_eval_loss.mean().item()
+        eval_accuracy += tmp_eval_accuracy
+
+        nb_eval_examples += b_input_ids.size(0)
+        nb_eval_steps += 1
+
+    print("Validation loss: {}".format(eval_loss/nb_eval_steps))
+    print("Validation Accuracy: {}".format(eval_accuracy/nb_eval_steps))
+    print("Validation F1-Score: {}".format(f1_score(predictions, true_labels)))
+    print("Classification Report")
+    print(classification_report(predictions, true_labels))
