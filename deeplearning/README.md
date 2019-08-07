@@ -22,3 +22,7 @@ This component is used to train your model based on your requirements
     >>> obj.initilize_model()
     >>> obj.start_train(epochs=2)
     >>> obj.start_eval()
+
+I have fixed the max sequence length to 40 after observing the result from the DataAnalyzer class.
+Its adviced to set the batch size to 64 according to the BERT papers. But you can decrease it if
+your GPU memory is low. I have defaulted the batch size to 32.

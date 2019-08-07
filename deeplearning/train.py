@@ -17,7 +17,7 @@ from oops.preprocess import Preprocess
 
 
 class Train:
-  def __init__(self, max_seq_len:int = 150, bs:int = 16, labels:List[str] = None):
+  def __init__(self, max_seq_len:int = 40, bs:int = 32, labels:List[str] = None):
     # SET YOUR SENTENCE LENGTH AND BATCH SIZE
     self.MAX_LEN = max_seq_len
     self.BATCH_SIZE = bs

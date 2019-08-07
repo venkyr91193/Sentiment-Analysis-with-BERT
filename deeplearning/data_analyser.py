@@ -2,12 +2,15 @@ import os
 
 import matplotlib.pyplot as plt
 import pandas as pd
+import spacy
 
 plt.style.use("ggplot")
 
 class DataAnalyser:
   def __init__(self):
     self.data = None
+    # load a blank model in spacy
+    self.spacy_obj = spacy.blank('en')
 
   def load_data(self):
     """
@@ -27,8 +30,10 @@ class DataAnalyser:
 
     for idx in range(len(self.data)):
       sent = self.data.content[idx]
-      length_sents.append(len(sent))
+      length_sents.append(len(self.spacy_obj(sent)))
     
-    print('Max length of the sentences present',max(length_sents))
+    print('The longest sentence has %d words ',max(length_sents))
     plt.hist(length_sents,bins=50)
+    plt.xlabel('Number of words per Input data.')
+    plt.ylabel('Frequency.')
     plt.show()
