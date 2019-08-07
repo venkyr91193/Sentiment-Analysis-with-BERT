@@ -6,7 +6,8 @@ from deeplearning.train import Train
 def test_all():
   obj = Train(labels=['happiness','sadness'])
   obj.initilize_model()
-  obj.start_train()
+  obj.start_train(epochs=2)
+  obj.start_eval()
   print()
 
 if __name__ == "__main__":

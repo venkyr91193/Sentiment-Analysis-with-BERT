@@ -6,7 +6,7 @@ import pandas as pd
 import torch
 from pytorch_transformers import (BertConfig, BertForSequenceClassification,
                                   BertTokenizer)
-from seqeval.metrics import classification_report, f1_score
+from sklearn.metrics import confusion_matrix, f1_score
 from sklearn.model_selection import train_test_split
 from torch.optim import Adam
 from torch.utils.data import (DataLoader, RandomSampler, SequentialSampler,
@@ -17,7 +17,7 @@ from oops.preprocess import Preprocess
 
 
 class Train:
-  def __init__(self, MAX_LEN:int = 150, BATCH_SIZE:int = 16, labels:List[str] = None):
+  def __init__(self, MAX_LEN:int = 75, BATCH_SIZE:int = 16, labels:List[str] = None):
     # SET YOUR SENTENCE LENGTH AND BATCH SIZE
     self.MAX_LEN = MAX_LEN
     self.BATCH_SIZE = BATCH_SIZE
@@ -64,7 +64,8 @@ class Train:
     # initialize cuda with torch
     self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     self.n_gpu = torch.cuda.device_count()
-    print(self.n_gpu)
+    print('Training on',torch.cuda.get_device_name())
+    self.model.cuda()
 
   def load_data(self):
     """
@@ -77,7 +78,7 @@ class Train:
     """
     To give the flat accuracy for the model output
     """
-    pred_flat = np.argmax(preds, axis=2).flatten()
+    pred_flat = np.argmax(preds, axis=1).flatten()
     labels_flat = labels.flatten()
     return np.sum(pred_flat == labels_flat) / len(labels_flat)
 
@@ -187,7 +188,7 @@ class Train:
             # gradient clipping
             torch.nn.utils.clip_grad_norm_(parameters=self.model.parameters(), max_norm=max_grad_norm)
             # update parameters
-            optimizer.step()
+            self.optimizer.step()
             self.model.zero_grad()
         # print train loss per epoch
         print("Train loss: {}".format(tr_loss/nb_tr_steps))
@@ -214,10 +215,10 @@ class Train:
             tmp_eval_loss = output[0]
             logits = output[1]
         logits = logits.detach().cpu().numpy()
-        predictions.extend([list(p) for p in np.argmax(logits, axis=1)])
+        predictions.extend([p for p in np.argmax(logits, axis=1)])
         label_ids = b_labels.to('cpu').numpy()
-        true_labels.append(label_ids)
-        tmp_eval_accuracy = flat_accuracy(logits, label_ids)
+        true_labels.extend(label_ids.flatten())
+        tmp_eval_accuracy = self.flat_accuracy(logits, label_ids)
 
         eval_loss += tmp_eval_loss.mean().item()
         eval_accuracy += tmp_eval_accuracy
@@ -227,6 +228,6 @@ class Train:
 
     print("Validation loss: {}".format(eval_loss/nb_eval_steps))
     print("Validation Accuracy: {}".format(eval_accuracy/nb_eval_steps))
-    print("Validation F1-Score: {}".format(f1_score(predictions, true_labels)))
+    print("Validation F1-Score: {}".format(f1_score(predictions, true_labels,average='micro')))
     print("Classification Report")
-    print(classification_report(predictions, true_labels))
+    print(confusion_matrix(predictions, true_labels))
