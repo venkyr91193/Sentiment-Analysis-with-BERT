@@ -17,10 +17,10 @@ from oops.preprocess import Preprocess
 
 
 class Train:
-  def __init__(self, MAX_LEN:int = 75, BATCH_SIZE:int = 16, labels:List[str] = None):
+  def __init__(self, max_seq_len:int = 150, bs:int = 16, labels:List[str] = None):
     # SET YOUR SENTENCE LENGTH AND BATCH SIZE
-    self.MAX_LEN = MAX_LEN
-    self.BATCH_SIZE = BATCH_SIZE
+    self.MAX_LEN = max_seq_len
+    self.BATCH_SIZE = bs
     self.labels = labels
     self.label_map = {label: i for i, label in enumerate(self.labels)}
     self.data = None

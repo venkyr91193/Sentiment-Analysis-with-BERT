@@ -4,7 +4,7 @@ sys.path.insert(0,os.path.join(os.path.dirname(os.path.dirname(__file__))))
 from deeplearning.train import Train
 
 def test_all():
-  obj = Train(labels=['happiness','sadness'])
+  obj = Train(max_seq_len=150,bs=8,labels=['happiness','sadness'])
   obj.initilize_model()
   obj.start_train(epochs=2)
   obj.start_eval()
