@@ -17,12 +17,14 @@ from oops.preprocess import Preprocess
 
 
 class Train:
-  def __init__(self, max_seq_len:int = 50, bs:int = 32, labels:List[str] = None):
+  def __init__(self, filename:str, max_seq_len:int = 50, bs:int = 32, labels:List[str] = None):
     # SET YOUR SENTENCE LENGTH AND BATCH SIZE
     self.MAX_LEN = max_seq_len
     self.BATCH_SIZE = bs
     self.labels = labels
     self.label_map = {label: i for i, label in enumerate(self.labels)}
+    self.filepath = os.path.join(os.path.dirname(os.path.dirname(__file__)),\
+      'data',filename)
     self.data = None
     self.preprocess = Preprocess()
 
@@ -30,6 +32,9 @@ class Train:
     self.tokenizer = None
     self.model = None
     self.optimizer = None
+    if not os.path.exists(self.filepath):
+      print('Invalid filename')
+      exit(0)
 
   def initilize_model(self):
     """
@@ -75,7 +80,7 @@ class Train:
     Function to load the data into a panda dataframe
     """
     self.data = pd.read_csv(os.path.join(os.path.dirname(os.path.dirname(__file__)),\
-                          'data','text_emotion.csv'))
+                          'data',self.filepath))
 
   def flat_accuracy(self, preds, labels):
     """
@@ -252,7 +257,8 @@ class Train:
     Saving as checkpoints allows you to load the model and update it again.
     """
     if os.path.exists(output_dir) and os.listdir(output_dir):
-      raise ValueError("Output directory ({}) already exists and is not empty.".format(output_dir))
+      print("Output directory ({}) already exists and is not empty.".format(output_dir))
+      exit(0)
     if not os.path.exists(output_dir):
       os.makedirs(output_dir)
     PATH = os.path.join(output_dir,model_name+'.pt')

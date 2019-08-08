@@ -12,12 +12,13 @@ To use this API, follow the steps as below:
     >>> obj.analyse()
 
 # Train component
-This component is used to train your model based on your requirements
+This component is used to train your model based on your requirements. The input file should be a csv file.
 
-    >>> obj = Train(max_seq_len=150,bs=8,labels=['happiness','sadness'])
+    >>> obj = Train('yourfilename.csv',max_seq_len=40,bs=8,labels=['happiness','sadness'])
+    # object initilization fails if the filename is incorrect
     # you can also set the seq length,batch size and labels you want to train explicitly
-    >>> obj.max_seq_len = 75
-    >>> obj.bs = 8
+    >>> obj.max_seq_len = 50
+    >>> obj.bs = 32
     >>> obj.labels = ['happiness','sadness']
     >>> obj.initilize_model()
     >>> obj.start_train(epochs=2)
