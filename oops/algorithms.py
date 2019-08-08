@@ -9,6 +9,8 @@ from oops.sklearn_object_api import SkLearn
 
 
 class Algorithms:
+  # making class immutable
+  __slots__ = ["sklearn_obj","preprocess","data","result"]
   def __init__(self):
     # object for sklearn api
     self.sklearn_obj = SkLearn()

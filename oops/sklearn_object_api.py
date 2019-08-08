@@ -6,6 +6,8 @@ from sklearn.naive_bayes import MultinomialNB
 
 
 class SkLearn:
+  # making class immutable
+  __slots__ = ["tfidf","count_vect","label_encoder","obj_list"]
   def __init__(self):
     self.tfidf = self.tf_idf()
     self.count_vect = self.count_vectorization()
