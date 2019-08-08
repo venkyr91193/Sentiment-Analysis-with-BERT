@@ -17,10 +17,14 @@ from oops.preprocess import Preprocess
 
 
 class Train:
+  # making class immutable
+  __slots__ = ["max_seq_len","bs","labels","label_map","filepath","data",
+  "preprocess","config","tokenizer","model","optimizer","train_dataloader",
+  "valid_dataloader","device","n_gpu"]
   def __init__(self, filename:str, max_seq_len:int = 50, bs:int = 32, labels:List[str] = None):
     # SET YOUR SENTENCE LENGTH AND BATCH SIZE
-    self.MAX_LEN = max_seq_len
-    self.BATCH_SIZE = bs
+    self.max_seq_len = max_seq_len
+    self.bs = bs
     self.labels = labels
     self.label_map = {label: i for i, label in enumerate(self.labels)}
     self.filepath = os.path.join(os.path.dirname(os.path.dirname(__file__)),\
@@ -117,8 +121,8 @@ class Train:
     tokens_temp = self.tokenizer.tokenize(example)
 
     # Account for [CLS] and [SEP] with "- 2"
-    if len(tokens_temp) > self.MAX_LEN - 2:
-        tokens_temp = tokens_temp[:(self.MAX_LEN - 2)]
+    if len(tokens_temp) > self.max_seq_len - 2:
+        tokens_temp = tokens_temp[:(self.max_seq_len - 2)]
     
     tokens = ["[CLS]"] + tokens_temp + ["[SEP]"]
     segment_ids = [0] * len(tokens)
@@ -126,14 +130,14 @@ class Train:
     input_mask = [1] * len(input_ids)
 
     # Zero-pad up to the sequence length.
-    padding = [0] * (self.MAX_LEN - len(input_ids))
+    padding = [0] * (self.max_seq_len - len(input_ids))
     input_ids += padding
     input_mask += padding
     segment_ids += padding
 
-    assert len(input_ids) == self.MAX_LEN
-    assert len(input_mask) == self.MAX_LEN
-    assert len(segment_ids) == self.MAX_LEN
+    assert len(input_ids) == self.max_seq_len
+    assert len(input_mask) == self.max_seq_len
+    assert len(segment_ids) == self.max_seq_len
 
     return input_ids, input_mask, segment_ids
 
@@ -169,11 +173,11 @@ class Train:
 
     train_data = TensorDataset(tr_inputs, tr_masks, tr_seg, tr_tags)
     train_sampler = RandomSampler(train_data)
-    train_dataloader = DataLoader(train_data, sampler=train_sampler, batch_size=self.BATCH_SIZE)
+    train_dataloader = DataLoader(train_data, sampler=train_sampler, batch_size=self.bs)
 
     valid_data = TensorDataset(val_inputs, val_masks, val_seg, val_tags)
     valid_sampler = SequentialSampler(valid_data)
-    valid_dataloader = DataLoader(valid_data, sampler=valid_sampler, batch_size=self.BATCH_SIZE)
+    valid_dataloader = DataLoader(valid_data, sampler=valid_sampler, batch_size=self.bs)
 
     return train_dataloader,valid_dataloader
 

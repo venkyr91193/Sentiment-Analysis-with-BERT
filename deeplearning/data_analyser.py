@@ -7,6 +7,7 @@ import spacy
 plt.style.use("ggplot")
 
 class DataAnalyser:
+  __slots__ = ["data","spacy_obj"]
   def __init__(self):
     self.data = None
     # load a blank model in spacy
