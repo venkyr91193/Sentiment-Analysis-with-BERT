@@ -10,6 +10,6 @@ is a simple count of all the occurances of the words present in the sentence. Fr
 a single word like 'happy' or 'joy' has a major effect on its sentiment. But in sentences like,
 'all the people around me are happy, but I am sad' will definitely give a wrong prediction if the words alone
 are being used to judge a sentiment. This is the place where training a model with attention heads comes into
-picture. Attention heads in short map the word I to sad giving sad the more priority than the happy (more complex
+picture. Attention heads in short map the word 'I' to 'sad' giving sad the more priority than the happy (more complex
 than its written here). Therefore training a sentence in both the directions with its context is the best way.
 
