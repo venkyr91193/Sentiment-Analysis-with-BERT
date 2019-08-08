@@ -244,3 +244,19 @@ class Train:
     print("Validation F1-Score: {}".format(f1_score(predictions, true_labels,average='micro')))
     print("Classification Report")
     print(confusion_matrix(predictions, true_labels))
+
+  def save_checkpoint(self, output_dir:str, model_name:str):
+    """
+    Function to save the model checkpoint at any point of the train or
+    at the end.
+    Saving as checkpoints allows you to load the model and update it again.
+    """
+    if os.path.exists(output_dir) and os.listdir(output_dir):
+      raise ValueError("Output directory ({}) already exists and is not empty.".format(output_dir))
+    if not os.path.exists(output_dir):
+      os.makedirs(output_dir)
+    PATH = os.path.join(output_dir,model_name+'.pt')
+    torch.save({
+      'model_state_dict': self.model.state_dict(),
+      'optimizer_state_dict': self.optimizer.state_dict(),
+      }, PATH)
