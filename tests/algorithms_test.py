@@ -6,7 +6,7 @@ from oops.algorithms import Algorithms
 def test_run_algorithms():
   obj = Algorithms()
   obj.run_algorithms()
-  assert(obj.results != None)
+  assert(obj.result != None)
 
 if __name__ == "__main__":
   test_run_algorithms()

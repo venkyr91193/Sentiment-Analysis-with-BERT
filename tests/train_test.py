@@ -6,8 +6,8 @@ from deeplearning.train import Train
 def test_all():
   obj = Train('text_emotion.csv',max_seq_len=50,bs=32,labels=['happiness','sadness'])
   obj.initilize_model()
-  obj.start_train(epochs=0)
-  obj.start_eval()
+  obj.start_train(epochs=1)
+  #obj.start_eval()
   obj.save_checkpoint(r'D:\Personal\Models','sample_model')
 
 if __name__ == "__main__":

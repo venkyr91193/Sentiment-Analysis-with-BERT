@@ -5,8 +5,8 @@ from deeplearning.data_analyser import DataAnalyser
 
 
 def test_all():
-    obj = DataAnalyser()
-    obj.analyse()
+  obj = DataAnalyser()
+  obj.analyse()
   
 if __name__ == "__main__":
   test_all()
