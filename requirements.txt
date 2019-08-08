@@ -1,0 +1,13 @@
+## pip install -r requirements.txt
+
+##### libraries without vesion specifiers #####
+torch
+numpy
+pandas
+pytorch_transformers
+sklearn
+spacy
+nltk
+textblob
+tqdm
+matplotlib

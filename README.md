@@ -5,6 +5,13 @@ Use pytorch implementation with the help of the libary pytorch_tranformers. (htt
 
 Use the Train class implementation (refer to .\deeplearning\README.md) to train your own model for sentiment classification using BERT.
 
-Data should be in csv in the folder .\data with the required columns 'sentiment' and 'content'.
+Data should be in csv in the folder .\data with the required columns 'sentiment' and 'content' 
+which has your emotions and text sentences respectively.
+
+# Install requirements
+
+Navigate to the folder Sentiment_Analysis_with_BERT and run the command below:
+
+pip install -r requirements.txt
 
 If you find any issues/bugs with the code. I am available on email at venkyr91193@gmail.com
