@@ -97,8 +97,10 @@ class Train:
     # I choose to train only for two labels
     # Do not use this preprocess if you want to train
     # for all the other emotions as well
-    label_list = ['anger','boredom','enthusiasm','empty','fun',
-    'relief','surprise','love','hate','neutral','worry','happiness','sadness']
+    label_list = []
+    for dat in self.data.sentiment.values:
+      label_list.append(dat)
+    label_list = list(set(label_list))
     for item in self.labels:
       if item in label_list:
         label_list.remove(item)
