@@ -18,6 +18,6 @@ accuracy = {'MultinomialNB_tfidf': 0.5019267822736031,
 pd.DataFrame(accuracy, index=['List of Models Used']).plot(kind='bar')
 plt.ylabel('Validation Accuracy in %')
 plt.xticks(rotation=0)
-plt.savefig(plot_path)
 plt.legend(loc=2, prop={'size': 6})
+plt.savefig(plot_path)
 plt.show()
