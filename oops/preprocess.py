@@ -32,7 +32,7 @@ class Preprocess:
     data.index = range(len(data))
     data = self.__lower_strip_symbols(data)
     data = self.__remove_stop_words(data)
-    daat = self.__match_lemma(data)
+    data = self.__match_lemma(data)
 
     # removing the repetitions in the letters
     data['content'] = data['content'].apply(lambda x: " ".join(Preprocess.__remove_repeat(x) for x in x.split()))
