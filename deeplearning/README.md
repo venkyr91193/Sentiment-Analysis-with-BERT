@@ -15,6 +15,9 @@ To use this API, follow the steps as below:
 This component is used to train your model based on your requirements. The input file should be a csv file.
 Please work from the root directory of the folder.
 
+Data should be in csv in the folder .\data with the required columns 'sentiment' and 'content' 
+which has your emotions and text sentences respectively.
+
     >>> from deeplearning.train import Train
     >>> obj = Train('yourfilename.csv',max_seq_len=40,bs=8,labels=['happiness','sadness'])
     # object initilization fails if the filename is incorrect
