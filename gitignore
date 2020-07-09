@@ -22,3 +22,6 @@ settings.json
 
 # Python
 dist/
+
+# history
+.history

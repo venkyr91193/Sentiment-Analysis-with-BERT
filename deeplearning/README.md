@@ -19,14 +19,14 @@ Data should be in csv in the folder .\data with the required columns 'sentiment'
 which has your emotions and text sentences respectively.
 
     >>> from deeplearning.train import Train
-    >>> obj = Train('yourfilename.csv',max_seq_len=40,bs=8,labels=['happiness','sadness'])
+    >>> obj = Train('yourfilename.csv',max_seq_len=40,bs=8,labels=['happiness','sadness'],epochs=2)
     # object initilization fails if the filename is incorrect
     # you can also set the seq length,batch size and labels you want to train explicitly
     >>> obj.max_seq_len = 50
     >>> obj.bs = 32
     >>> obj.labels = ['happiness','sadness']
     >>> obj.initilize_model()
-    >>> obj.start_train(epochs=2)
+    >>> obj.start_train()
     >>> obj.start_eval()
 
 # Save the model
@@ -37,7 +37,7 @@ To save the model at any given checkpoint or training. You can use as shown belo
 # Load the model
 To load the model again for training or testing. Here is how you do it.
 
-    >>> from pytorch_transformers import BertConfig, BertForSequenceClassification
+    >>> from transformers import BertConfig, BertForSequenceClassification
     >>> config = BertConfig()
     >>> model = BertForSequenceClassification(config)
     >>> checkpoint = torch.load('your_output_model_path\model_name.pt')

@@ -4,14 +4,13 @@ from typing import List
 import numpy as np
 import pandas as pd
 import torch
-from pytorch_transformers import (BertConfig, BertForSequenceClassification,
-                                  BertTokenizer)
 from sklearn.metrics import confusion_matrix, f1_score
 from sklearn.model_selection import train_test_split
-from torch.optim import Adam
 from torch.utils.data import (DataLoader, RandomSampler, SequentialSampler,
                               TensorDataset)
 from tqdm import tqdm, trange
+from transformers import (AdamW, BertConfig, BertForSequenceClassification,
+                          BertTokenizer, get_linear_schedule_with_warmup)
 
 from oops.preprocess import Preprocess
 
@@ -19,10 +18,13 @@ from oops.preprocess import Preprocess
 class Train:
   # making class immutable
   __slots__ = ["max_seq_len","bs","labels","label_map","filepath","data",
-  "preprocess","config","tokenizer","model","optimizer","train_dataloader",
-  "valid_dataloader","device","n_gpu"]
-  def __init__(self, filename:str, max_seq_len:int = 50, bs:int = 32, labels:List[str] = None):
+  "preprocess","tokenizer","model","optimizer","train_dataloader","epochs",
+  "valid_dataloader","device","n_gpu","scheduler"]
+  def __init__(
+    self, filename:str, max_seq_len:int = 50, bs:int = 32, labels:List[str] = None, epochs:int = 5
+  ):
     # SET YOUR SENTENCE LENGTH AND BATCH SIZE
+    self.epochs = epochs
     self.max_seq_len = max_seq_len
     self.bs = bs
     self.labels = labels
@@ -32,10 +34,10 @@ class Train:
     self.data = None
     self.preprocess = Preprocess()
 
-    self.config = None
     self.tokenizer = None
     self.model = None
     self.optimizer = None
+    self.scheduler = None
     if not os.path.exists(self.filepath):
       print('Invalid filename')
       exit(0)
@@ -44,31 +46,18 @@ class Train:
     """
     Function to initialize the model
     """
-    # BERT configuration and model initialization
-    self.config = BertConfig.from_pretrained('bert-base-uncased')
-    self.tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
-    self.model = BertForSequenceClassification(self.config)
-    # FINE TUNING
-    FULL_FINETUNING = True
-    if FULL_FINETUNING:
-        param_optimizer = list(self.model.named_parameters())
-        no_decay = ['bias', 'LayerNorm.bias', 'LayerNorm.weight']
-        optimizer_grouped_parameters = [
-            {'params': [p for n, p in param_optimizer if not any(nd in n for nd in no_decay)],
-            'weight_decay_rate': 0.01},
-            {'params': [p for n, p in param_optimizer if any(nd in n for nd in no_decay)],
-            'weight_decay_rate': 0.0}
-        ]
-    else:
-      param_optimizer = list(self.model.classifier.named_parameters())
-      optimizer_grouped_parameters = [{"params": [p for n, p in param_optimizer]}]
-
-    self.optimizer = Adam(optimizer_grouped_parameters, lr=3e-5)
+    # make the raw data into input tensors for train
+    self.train_dataloader,self.valid_dataloader = self.make_train_test_tensor()
+    # Parameters:
+    lr = 2e-5
+    adam_epsilon = 1e-8
+    num_warmup_steps = 0
+    num_training_steps = len(self.train_dataloader)*self.epochs
+    self.optimizer = AdamW(model.parameters(),lr=lr,eps=adam_epsilon,correct_bias=False)
+    self.scheduler = get_linear_schedule_with_warmup(optimizer, num_warmup_steps=num_warmup_steps, num_training_steps=num_training_steps)  # PyTorch scheduler
     # load and preprocess
     self.load_data()
     self.preprocess_data()
-    # make the raw data into input tensors for train
-    self.train_dataloader,self.valid_dataloader = self.make_train_test_tensor()
 
     # initialize cuda with torch
     self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -78,6 +67,9 @@ class Train:
       self.model.cuda()
     else:
       print('Training on CPU')
+    # tokenizer and model initialization
+    self.tokenizer = BertTokenizer.from_pretrained('bert-base-cased')
+    self.model = BertForSequenceClassification.from_pretrained("bert-base-cased").to(self.device)
 
   def load_data(self):
     """
@@ -123,7 +115,7 @@ class Train:
     # Account for [CLS] and [SEP] with "- 2"
     if len(tokens_temp) > self.max_seq_len - 2:
         tokens_temp = tokens_temp[:(self.max_seq_len - 2)]
-    
+
     tokens = ["[CLS]"] + tokens_temp + ["[SEP]"]
     segment_ids = [0] * len(tokens)
     input_ids = self.tokenizer.convert_tokens_to_ids(tokens)
@@ -181,13 +173,13 @@ class Train:
 
     return train_dataloader,valid_dataloader
 
-  def start_train(self, epochs:int = 5):
+  def start_train(self):
     """
     Function to train the model
     """
     max_grad_norm = 1.0
 
-    for _ in trange(epochs, desc="Epoch"):
+    for _ in trange(self.epochs, desc="Epoch"):
         # TRAIN loop
         self.model.train()
         tr_loss = 0
@@ -196,12 +188,8 @@ class Train:
             # add batch to gpu
             batch = tuple(t.to(self.device) for t in batch)
             b_input_ids, b_input_mask, b_segment_ids, b_labels = batch
-            '''
-            b_input_ids = b_input_ids.long()
-            b_labels = b_labels.long()
-            '''
             # forward pass
-            output = self.model(b_input_ids, b_segment_ids, b_input_mask, labels=b_labels)
+            output = self.model(b_input_ids, token_type_ids=None, attention_mask=b_input_mask, labels=b_labels)
             loss = output[0]
             # backward pass
             loss.backward()
@@ -211,9 +199,12 @@ class Train:
             nb_tr_steps += 1
             # gradient clipping
             torch.nn.utils.clip_grad_norm_(parameters=self.model.parameters(), max_norm=max_grad_norm)
-            # update parameters
+            # update parameters and take a step using the computed gradient
             self.optimizer.step()
-            self.model.zero_grad()
+            # Update learning rate schedule
+            self.scheduler.step()
+            # Clear the previous accumulated gradients
+            self.optimizer.zero_grad()
         # print train loss per epoch
         print("Train loss: {}".format(tr_loss/nb_tr_steps))
 
@@ -230,12 +221,8 @@ class Train:
     for batch in self.valid_dataloader:
         batch = tuple(t.to(self.device) for t in batch)
         b_input_ids, b_input_mask, b_segment_ids, b_labels = batch
-        '''
-        b_input_ids = b_input_ids.long()
-        b_labels = b_labels.long()
-        '''
         with torch.no_grad():
-            output = self.model(b_input_ids, b_segment_ids, b_input_mask, labels = b_labels)
+            output = self.model(b_input_ids, token_type_ids=None, attention_mask=b_input_mask, labels = b_labels)
             tmp_eval_loss = output[0]
             logits = output[1]
         logits = logits.detach().cpu().numpy()
@@ -268,6 +255,7 @@ class Train:
     if not os.path.exists(output_dir):
       os.makedirs(output_dir)
     PATH = os.path.join(output_dir,model_name+'.pt')
+    self.model.save_pretrained(output_dir)
     torch.save({
       'model_state_dict': self.model.state_dict(),
       'optimizer_state_dict': self.optimizer.state_dict(),
