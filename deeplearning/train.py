@@ -96,11 +96,8 @@ class Train:
     label_list = []
     for dat in self.data.sentiment.values:
       label_list.append(dat)
-    label_list = list(set(label_list))
-    for item in self.labels:
-      if item in label_list:
-        label_list.remove(item)
-    self.data = self.preprocess._Preprocess__remove_rows(self.data,label_list)
+    to_remove = list(set(label_list) - set(self.labels))
+    self.data = self.preprocess._Preprocess__remove_rows(self.data,to_remove)
     # reset the index
     self.data.index = range(len(self.data))
 
