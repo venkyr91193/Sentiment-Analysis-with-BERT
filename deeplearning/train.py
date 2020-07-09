@@ -53,8 +53,6 @@ class Train:
     adam_epsilon = 1e-8
     num_warmup_steps = 0
     num_training_steps = len(self.train_dataloader)*self.epochs
-    self.optimizer = AdamW(model.parameters(),lr=lr,eps=adam_epsilon,correct_bias=False)
-    self.scheduler = get_linear_schedule_with_warmup(optimizer, num_warmup_steps=num_warmup_steps, num_training_steps=num_training_steps)  # PyTorch scheduler
     # load and preprocess
     self.load_data()
     self.preprocess_data()
@@ -69,7 +67,9 @@ class Train:
       print('Training on CPU')
     # tokenizer and model initialization
     self.tokenizer = BertTokenizer.from_pretrained('bert-base-cased')
-    self.model = BertForSequenceClassification.from_pretrained("bert-base-cased").to(self.device)
+    self.model = BertForSequenceClassification.from_pretrained("bert-base-cased",num_labels=len(self.labels)).to(self.device)
+    self.optimizer = AdamW(self.model.parameters(),lr=lr,eps=adam_epsilon,correct_bias=False)
+    self.scheduler = get_linear_schedule_with_warmup(self.optimizer, num_warmup_steps=num_warmup_steps, num_training_steps=num_training_steps)  # PyTorch scheduler
 
   def load_data(self):
     """
