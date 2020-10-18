@@ -1,4 +1,4 @@
-# Sentiment_Analysis_with_BERT
+# Sentiment Analysis with BERT
 Sentiment analysis on twitter data using BERT from google (https://arxiv.org/abs/1810.04805)
 using the pytorch implementation with the help of the libary tranformers. (https://huggingface.co/transformers/)
 
