@@ -9,7 +9,7 @@ which has your emotions and text sentences respectively.
 
 # Install requirements
 
-Navigate to the folder Sentiment_Analysis_with_BERT and run the command below:
+Navigate to the folder Sentiment-Analysis-with-BERT and run the command below:
 
 pip install -r requirements.txt
 
