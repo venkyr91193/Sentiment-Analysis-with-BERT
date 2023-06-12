@@ -5,7 +5,7 @@ torch
 numpy
 pandas
 spacy==2.2.3
-transformers==2.8.0
+transformers==4.30.0
 sklearn
 nltk
 textblob
